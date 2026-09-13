@@ -51,6 +51,39 @@ UF_POR_CODIGO = {
     42: 'SC', 43: 'RS', 50: 'MS', 51: 'MT', 52: 'GO', 53: 'DF',
 }
 
+# Região é geografia fixa por UF, então qualquer divergência entre a coluna
+# "Região" da planilha e a UF do registro pode ser corrigida sem ambiguidade
+# nenhuma (a UF não tem essa mesma garantia, por isso não mexemos nela).
+UF_PARA_REGIAO = {
+    'AC': 'NORTE', 'AP': 'NORTE', 'AM': 'NORTE', 'PA': 'NORTE', 'RO': 'NORTE', 'RR': 'NORTE', 'TO': 'NORTE',
+    'AL': 'NORDESTE', 'BA': 'NORDESTE', 'CE': 'NORDESTE', 'MA': 'NORDESTE', 'PB': 'NORDESTE',
+    'PE': 'NORDESTE', 'PI': 'NORDESTE', 'RN': 'NORDESTE', 'SE': 'NORDESTE',
+    'DF': 'CENTRO-OESTE', 'GO': 'CENTRO-OESTE', 'MT': 'CENTRO-OESTE', 'MS': 'CENTRO-OESTE',
+    'ES': 'SUDESTE', 'MG': 'SUDESTE', 'RJ': 'SUDESTE', 'SP': 'SUDESTE',
+    'PR': 'SUL', 'RS': 'SUL', 'SC': 'SUL',
+}
+
+
+def corrige_regioes(registros):
+    """Corrige a coluna 'regiao' com base na UF (fato geográfico, sem
+    ambiguidade) e devolve a lista de correções feitas, para documentar
+    de forma transparente na própria página."""
+    correcoes = []
+    for r in registros:
+        uf = r['uf'].strip().upper()
+        regiao_correta = UF_PARA_REGIAO.get(uf)
+        if regiao_correta and r['regiao'].strip().upper() != regiao_correta:
+            correcoes.append({
+                'municipio': r['municipio'], 'comunidade': r['comunidade'], 'uf': uf,
+                'regiao_original': r['regiao'].strip().title(),
+                'regiao_corrigida': regiao_correta.title(),
+                'processo': r['processo'], 'ano': r['ano'],
+            })
+            r['regiao'] = regiao_correta
+    if correcoes:
+        print(f"{len(correcoes)} divergência(s) entre Região e UF corrigida(s) automaticamente.")
+    return correcoes
+
 # mapeia o cabeçalho exato da planilha (como está hoje) para o nosso
 # nome de campo interno. Se a FCP renomear uma coluna, é só ajustar aqui.
 MAPA_COLUNAS = {
@@ -234,7 +267,7 @@ def geocodifica(registros, por_codigo, por_nome_uf):
 # ----------------------------------------------------------------------
 # GERAÇÃO DO index.html
 # ----------------------------------------------------------------------
-def gera_pagina(registros, sem_coordenada):
+def gera_pagina(registros, sem_coordenada, correcoes):
     with open(TEMPLATE_PATH, encoding='utf-8') as f:
         tpl = f.read()
 
@@ -246,6 +279,7 @@ def gera_pagina(registros, sem_coordenada):
     tpl = tpl.replace('__TOTAL_COMUNIDADES__', f'{total_comunidades:,}'.replace(',', '.'))
     tpl = tpl.replace('__NAO_GEOCODIFICADOS__', str(sem_coordenada))
     tpl = tpl.replace('__DATA_ATUALIZACAO__', data_hoje)
+    tpl = tpl.replace('__CORRECOES_JSON__', json.dumps(correcoes, ensure_ascii=False))
     tpl = tpl.replace('__DATA_JSON__', json.dumps(registros, ensure_ascii=False))
 
     restantes = re.findall(r'__[A-Z_]+__', tpl)
@@ -255,7 +289,8 @@ def gera_pagina(registros, sem_coordenada):
     with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
         f.write(tpl)
 
-    print(f"{OUTPUT_PATH} gerado: {total_registros} certidões, {total_comunidades} comunidades, data {data_hoje}.")
+    print(f"{OUTPUT_PATH} gerado: {total_registros} certidões, {total_comunidades} comunidades, "
+          f"data {data_hoje}, {len(correcoes)} correção(ões) de região.")
 
 
 def main():
@@ -270,7 +305,8 @@ def main():
 
     por_codigo, por_nome_uf = carrega_coordenadas()
     sem_coordenada = geocodifica(registros, por_codigo, por_nome_uf)
-    gera_pagina(registros, sem_coordenada)
+    correcoes = corrige_regioes(registros)
+    gera_pagina(registros, sem_coordenada, correcoes)
 
 
 if __name__ == "__main__":
