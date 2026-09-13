@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Raizame · Comunidades Quilombolas Certificadas (base FCP)</title>
-<meta name="description" content="Raizame: painel de pesquisa independente sobre as Certidões de Regularidade de Quilombo (CRQ) emitidas pela Fundação Cultural Palmares, com mapa, série histórica e download dos dados.">
+<title>Raizame Dados · Comunidades Quilombolas Certificadas (base FCP)</title>
+<meta name="description" content="Raizame Dados: painel de pesquisa independente sobre as Certidões de Regularidade de Quilombo (CRQ) emitidas pela Fundação Cultural Palmares, com mapa, série histórica e download dos dados.">
 <meta name="theme-color" content="#33513B">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -129,6 +129,8 @@
     .leaflet-popup-tip, .leaflet-popup-content-wrapper { background: var(--creme); }
     .ponto-tooltip { background: var(--verde-escuro); color:#fff; border:none; font-family:'Inter',sans-serif; font-size:11px; padding:3px 8px; box-shadow:none; }
     .ponto-tooltip::before { border-top-color: var(--verde-escuro) !important; }
+    .ponto-rotulo { background: rgba(251,246,234,0.92); color: var(--grafite); border:1px solid var(--borda); font-family:'Inter',sans-serif; font-size:10.5px; font-weight:600; padding:2px 6px; box-shadow:0 1px 3px rgba(36,56,42,0.2); white-space:nowrap; }
+    .ponto-rotulo::before { display:none; }
     .popup-lista { margin: 6px 0 0; padding-left: 16px; max-height: 140px; overflow-y:auto; }
     .popup-lista li { margin-bottom: 2px; }
 
@@ -249,7 +251,7 @@
     .tag-situacao.cdru { background:#DBEAFE; color:#1E40AF; }
 </style>
 <style>
-    /* ===== IDENTIDADE ORGÂNICA (Raizame) ===== */
+    /* ===== IDENTIDADE ORGÂNICA (Raizame Dados) ===== */
     header.site-header { position: relative; overflow: hidden; }
     .motivo-raiz { position: absolute; inset: 0; pointer-events: none; opacity: 0.08; z-index: 0; }
     .motivo-raiz svg { width: 100%; height: 100%; }
@@ -285,7 +287,7 @@
 <!-- FAIXA INSTITUCIONAL -->
 <div class="top-bar">
     <div class="container">
-        <span><strong>Raizame</strong> · painel de pesquisa independente, com dados públicos da Fundação Cultural Palmares (FCP)</span>
+        <span><strong>Raizame Dados</strong> · painel de pesquisa independente, com dados públicos da Fundação Cultural Palmares (FCP)</span>
         <span>Não é um canal oficial do Governo Federal</span>
     </div>
 </div>
@@ -315,7 +317,7 @@
   <path d="M12 9L15.8 6.3M12 13L16.4 10.6M12 16.6L15.6 14.6" stroke="#3B5D42" stroke-width="0.9" fill="none" stroke-linecap="round"/>
 </svg></div>
             <div class="header-titulos">
-                <h1>Raizame</h1>
+                <h1>Raizame Dados</h1>
                 <p class="subtitulo-nome">Comunidades quilombolas certificadas pela Fundação Cultural Palmares</p>
                 <p class="subtitulo">Um painel de pesquisa para consultar, cruzar e baixar os dados públicos de certificação quilombola no Brasil. Reúne mapa, série histórica e a situação de titulação de cada território, pensado para quem pesquisa mas não precisa lidar com planilha dinâmica.</p>
             </div>
@@ -371,6 +373,10 @@
                 <select id="filterEtapa"><option value="">Todas</option></select>
             </div>
             <div class="campo">
+                <label for="filterSituacao">Situação da titulação</label>
+                <select id="filterSituacao"><option value="">Todas</option></select>
+            </div>
+            <div class="campo">
                 <label for="filterBusca">Busca por nome</label>
                 <input type="text" id="filterBusca" placeholder="Comunidade, município ou processo">
             </div>
@@ -412,7 +418,7 @@
             <div>
                 <div class="rotulo">Cruzamento certificação × titulação</div>
                 <h2>Da certidão ao título: em que pé está o processo?</h2>
-                <p class="descricao">A certidão da FCP (CRQ) reconhece a comunidade como quilombola, mas não titula o território; isso é feito depois, majoritariamente pelo INCRA. Esta análise cruza a coluna "Etapa do processo de titulação" com a presença de um número de processo aberto no INCRA para estimar em que fase cada comunidade certificada está.</p>
+                <p class="descricao">A certidão da FCP (CRQ) reconhece a comunidade como quilombola, mas não titula o território; isso é feito depois, majoritariamente pelo INCRA. Esta análise cruza a coluna "Etapa do processo de titulação" com a presença de um número de processo aberto no INCRA para estimar em que fase cada comunidade certificada está. Para isolar só uma dessas situações no mapa e no restante da página, use o filtro "Situação da titulação" no topo.</p>
             </div>
         </div>
         <div id="destaqueSituacao"></div>
@@ -450,6 +456,25 @@
         </div>
         <div class="grafico-wrapper" style="margin-top:0;">
             <canvas id="graficoAno"></canvas>
+        </div>
+    </div>
+</section>
+
+<!-- RITMO DE EMISSÃO -->
+<section class="bloco">
+    <div class="container">
+        <div class="secao-cabecalho">
+            <div>
+                <div class="rotulo">Cruzamento pouco óbvio</div>
+                <h2>De portarias coletivas para portarias individuais</h2>
+                <p class="descricao">Cruza o ano de certificação com o número de portarias distintas publicadas naquele ano. Cada portaria pode certificar uma ou várias comunidades de uma vez, então a média de comunidades por portaria mostra como a FCP organiza esses atos.</p>
+            </div>
+        </div>
+        <div id="destaqueRitmo"></div>
+        <div class="stacked-wrapper" style="height:280px;"><canvas id="graficoRitmoPortarias"></canvas></div>
+        <div class="caixa-aviso" style="margin-top:16px;">
+            <strong>O que este gráfico mostra</strong>
+            A barra é o número de portarias distintas publicadas no ano; a linha é a média de comunidades certificadas por portaria naquele ano. Até meados dos anos 2010, era comum uma portaria certificar dezenas de comunidades de uma vez. A partir de 2017, o padrão muda: o número de portarias distintas dispara, mas cada uma passa a cobrir, em média, só uma comunidade. Isso sugere uma mudança na forma de tramitar os processos na FCP, não necessariamente uma mudança no ritmo real de reconhecimento.
         </div>
     </div>
 </section>
@@ -528,6 +553,23 @@
                 <tbody id="corpoRanking"></tbody>
             </table>
         </div>
+        <div class="nota-metodo" style="margin-top:10px;">Ranking por número de comunidades no mesmo processo, não pela população: veja a próxima seção para a concentração por município.</div>
+    </div>
+</section>
+
+<!-- CONCENTRAÇÃO TERRITORIAL -->
+<section class="bloco">
+    <div class="container">
+        <div class="secao-cabecalho">
+            <div>
+                <div class="rotulo">Concentração</div>
+                <h2>Quanto a certificação está concentrada em poucos municípios?</h2>
+                <p class="descricao">Soma as comunidades certificadas por município (não por processo, como no ranking acima) e mostra o quanto os municípios com mais comunidades pesam no total do recorte atual.</p>
+            </div>
+        </div>
+        <div id="destaqueConcentracao"></div>
+        <div class="stacked-wrapper" style="height:300px;"><canvas id="graficoConcentracao"></canvas></div>
+        <div class="nota-metodo" id="notaConcentracao"></div>
     </div>
 </section>
 
@@ -602,7 +644,7 @@
                 </ul>
                 <div class="caixa-aviso">
                     <strong>Limitações conhecidas da base</strong>
-                    A certificação é autodeclaratória e não implica, por si só, titulação do território (etapa posterior, conduzida pelo INCRA ou por órgãos estaduais). O campo "Nº de moradores" está disponível apenas quando informado no processo original. Por isso, a soma de moradores deste painel é um piso, não o total real. 67 registros citam mais de um município; 16 registros têm código de IBGE com formatação irregular na planilha de origem, dos quais 2 não puderam ser localizados nem por nome. Esses casos foram documentados e não afetam a contagem oficial de certidões e comunidades, apenas a precisão do mapa.
+                    A certificação é autodeclaratória e não implica, por si só, titulação do território (etapa posterior, conduzida pelo INCRA ou por órgãos estaduais). O campo "Nº de moradores" está disponível apenas quando informado no processo original. Por isso, a soma de moradores deste painel é um piso, não o total real. 67 registros citam mais de um município; 16 registros têm código de IBGE com formatação irregular na planilha de origem, dos quais 2 não puderam ser localizados nem por nome. Esses casos foram documentados e não afetam a contagem oficial de certidões e comunidades, apenas a precisão do mapa. A coluna "População IBGE" da planilha original está com dado corrompido (coordenadas geográficas e números sem padrão em vez de população) em praticamente todos os poucos registros preenchidos; por isso ela não é usada em nenhuma análise deste painel. O campo "Porta de entrada" só passou a ser preenchido a partir de 2025, então não permite uma leitura histórica.
                 </div>
             </div>
             <div class="cartao-fonte">
@@ -625,7 +667,7 @@
         <div class="secao-cabecalho">
             <div>
                 <div class="rotulo">Apoie este projeto</div>
-                <h2>Contribua com a manutenção do Raizame</h2>
+                <h2>Contribua com a manutenção do Raizame Dados</h2>
             </div>
         </div>
         <div class="apoio-caixa">
@@ -649,7 +691,7 @@
             <img class="foto-autor" src="data:image/jpeg;base64,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" alt="Foto de Israel da Silva Oliveira" width="72" height="72">
             <div>
                 <strong>Sobre esta ferramenta</strong>
-                <p>Página desenvolvida por <strong style="display:inline;text-transform:none;letter-spacing:0;font-size:13px;">Israel da Silva Oliveira</strong>, doutorando em Antropologia Social (PPGAS, Museu Nacional, UFRJ), mestre em Antropologia Social e Graduado em Ciencias Sociais (UFAL) </p>
+                <p>Página desenvolvida por <strong style="display:inline;text-transform:none;letter-spacing:0;font-size:13px;">Israel da Silva Oliveira</strong>, doutorando em Antropologia Social (PPGAS, Museu Nacional, UFRJ), mestre em Antropologia Social e Graduado em Ciências Sociais (UFAL), pesquisador vinculado à Rede de Pesquisadoras e Pesquisadores Quilombolas da CONAQ.</p>
                 <p>Currículo Lattes: <a href="https://lattes.cnpq.br/4743156179308228" target="_blank" rel="noopener">lattes.cnpq.br/4743156179308228</a></p>
                 <p>ORCID: <a href="https://orcid.org/0009-0005-4468-7478" target="_blank" rel="noopener">0009-0005-4468-7478</a></p>
                 <p>Contato: <a href="mailto:israel.oliveira@ics.ufal.br">israel.oliveira@ics.ufal.br</a></p>
@@ -664,7 +706,7 @@
             <p>Os dados de certificação são de domínio público. Ao citar este painel em trabalhos acadêmicos, cite também a fonte primária (Fundação Cultural Palmares) e a data do corte (14/08/2026).</p>
         </div>
         <div class="assinatura">
-            Raizame · página independente de pesquisa, não vinculada oficialmente à Fundação Cultural Palmares · dados de domínio público · última atualização da base: 14/08/2026 · criado por Israel da Silva Oliveira
+            Raizame Dados · página independente de pesquisa, não vinculada oficialmente à Fundação Cultural Palmares · dados de domínio público · última atualização da base: 14/08/2026 · criado por Israel da Silva Oliveira
         </div>
     </div>
 </footer>
@@ -882,6 +924,114 @@
     }
 
     // ============================================================
+    // RITMO DE EMISSÃO DAS PORTARIAS (coletivas x individuais)
+    // ============================================================
+    let chartRitmoPortarias = null;
+
+    function renderRitmoPortarias(lista) {
+        const porAno = {};
+        lista.forEach(d => {
+            if (!d.ano || !d.portaria) return;
+            if (!porAno[d.ano]) porAno[d.ano] = { portarias: new Set(), comunidades: 0 };
+            porAno[d.ano].portarias.add(d.portaria);
+            porAno[d.ano].comunidades += (parseInt(d.crq) || 0);
+        });
+        const anos = Object.keys(porAno).sort();
+        const nPortarias = anos.map(a => porAno[a].portarias.size);
+        const mediaPorPortaria = anos.map((a,i) => nPortarias[i] ? +(porAno[a].comunidades / nPortarias[i]).toFixed(1) : 0);
+
+        // destaque: compara a média de comunidades/portaria antes e depois de 2017
+        const antes = anos.filter(a => +a < 2017);
+        const depois = anos.filter(a => +a >= 2017);
+        const mediaAntes = antes.length ? antes.reduce((s,a,i)=>s+mediaPorPortaria[anos.indexOf(a)],0) / antes.length : 0;
+        const mediaDepois = depois.length ? depois.reduce((s,a,i)=>s+mediaPorPortaria[anos.indexOf(a)],0) / depois.length : 0;
+        const destaque = document.getElementById('destaqueRitmo');
+        if (destaque) {
+            if (antes.length && depois.length) {
+                destaque.innerHTML = `<div class="destaque-caixa"><div class="numero">De ${mediaAntes.toFixed(0)} para ${mediaDepois.toFixed(1)} comunidade(s) por portaria</div><div class="texto">Média de comunidades certificadas por portaria: ${mediaAntes.toFixed(1)} nos anos até 2016 (portarias coletivas), contra ${mediaDepois.toFixed(1)} de 2017 em diante (predominantemente uma comunidade por portaria), no recorte atual.</div></div>`;
+            } else {
+                destaque.innerHTML = '';
+            }
+        }
+
+        const ctx = document.getElementById('graficoRitmoPortarias').getContext('2d');
+        if (chartRitmoPortarias) chartRitmoPortarias.destroy();
+        chartRitmoPortarias = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: anos,
+                datasets: [
+                    { type: 'bar', label: 'Nº de portarias distintas', data: nPortarias, backgroundColor: '#C9973D', order: 2, yAxisID: 'y' },
+                    { type: 'line', label: 'Média de comunidades por portaria', data: mediaPorPortaria, borderColor: '#6B4226', backgroundColor: '#6B4226', tension: 0.25, order: 1, yAxisID: 'y1', pointRadius: 3 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: true, position: 'bottom', labels: { font: { family:'Inter', size: 11 }, boxWidth: 12 } } },
+                scales: {
+                    y: { position: 'left', beginAtZero: true, title: { display: true, text: 'Nº de portarias' } },
+                    y1: { position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, title: { display: true, text: 'Comunidades / portaria' } }
+                }
+            }
+        });
+    }
+
+    // ============================================================
+    // CONCENTRAÇÃO TERRITORIAL (Pareto: poucos municípios concentram
+    // boa parte das comunidades certificadas)
+    // ============================================================
+    let chartConcentracao = null;
+
+    function renderConcentracao(lista) {
+        const porMuni = {};
+        lista.forEach(d => {
+            const chave = `${d.municipio} (${d.uf})`;
+            porMuni[chave] = (porMuni[chave] || 0) + (parseInt(d.crq) || 0);
+        });
+        const ranking = Object.entries(porMuni).sort((a,b) => b[1]-a[1]);
+        const totalComunidades = ranking.reduce((s,[,v])=>s+v,0) || 1;
+        const totalMunicipios = ranking.length;
+
+        const top15 = ranking.slice(0, 15);
+        let acumulado = 0;
+        const pctAcumulado = top15.map(([,v]) => { acumulado += v; return +(100*acumulado/totalComunidades).toFixed(1); });
+
+        const marco = ranking.slice(0, 10).reduce((s,[,v])=>s+v,0);
+        const pctTop10 = totalMunicipios ? +(100*marco/totalComunidades).toFixed(1) : 0;
+        const pctMunicipiosTop10 = totalMunicipios ? +(100*Math.min(10,totalMunicipios)/totalMunicipios).toFixed(1) : 0;
+
+        const destaque = document.getElementById('destaqueConcentracao');
+        if (destaque) {
+            destaque.innerHTML = `<div class="destaque-caixa"><div class="numero">${pctTop10}% das comunidades estão em só ${Math.min(10,totalMunicipios)} municípios</div><div class="texto">Isso é ${pctMunicipiosTop10}% dos ${totalMunicipios.toLocaleString('pt-BR')} municípios com ao menos uma comunidade certificada no recorte atual: os outros ${(100-pctMunicipiosTop10).toFixed(1)}% dos municípios dividem o restante das certificações entre si.</div></div>`;
+        }
+
+        const ctx = document.getElementById('graficoConcentracao').getContext('2d');
+        if (chartConcentracao) chartConcentracao.destroy();
+        chartConcentracao = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: top15.map(([k]) => k),
+                datasets: [
+                    { type: 'bar', label: 'Comunidades certificadas', data: top15.map(([,v])=>v), backgroundColor: '#B85C2E', order: 2, yAxisID: 'y' },
+                    { type: 'line', label: '% acumulado do total', data: pctAcumulado, borderColor: '#24382A', backgroundColor: '#24382A', tension: 0.2, order: 1, yAxisID: 'y1', pointRadius: 3 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: true, position: 'bottom', labels: { font: { family:'Inter', size: 11 }, boxWidth: 12 } } },
+                scales: {
+                    x: { ticks: { font: { size: 10 }, maxRotation: 60, minRotation: 40 } },
+                    y: { position: 'left', beginAtZero: true, title: { display: true, text: 'Comunidades certificadas' } },
+                    y1: { position: 'right', beginAtZero: true, max: 100, grid: { drawOnChartArea: false }, title: { display: true, text: '% acumulado' } }
+                }
+            }
+        });
+
+        const nota = document.getElementById('notaConcentracao');
+        if (nota) nota.textContent = `Os 15 municípios acima concentram ${pctAcumulado.length ? pctAcumulado[pctAcumulado.length-1] : 0}% de todas as comunidades certificadas no recorte atual (${totalComunidades.toLocaleString('pt-BR')} no total, distribuídas por ${totalMunicipios.toLocaleString('pt-BR')} municípios).`;
+    }
+
+    // ============================================================
     // MAIORES TERRITÓRIOS
     // ============================================================
     function renderRanking(lista) {
@@ -978,7 +1128,7 @@
             g.certidoes++;
             g.comunidades += (parseInt(d.crq)||0);
             g.moradores += (parseInt(d.moradores)||0);
-            if (g.nomes.length < 10) g.nomes.push(d.comunidade);
+            g.nomes.push(d.comunidade);
         });
         return Object.values(grupos);
     }
@@ -1007,15 +1157,27 @@
             if (dica) dica.style.opacity = '0';
         });
         mapaInstance.getContainer().addEventListener('mouseleave', () => mapaInstance.scrollWheelZoom.disable());
+        mapaInstance.on('zoomend', atualizarModoRotulo);
 
         renderLegendaRegioes();
         renderMapa(agregarPontosMapa(dados), true);
         setTimeout(() => { if (dica) dica.style.opacity = '0'; }, 5000);
     }
 
+    let marcadoresAtuais = [];
+    const ZOOM_ROTULOS = 7; // a partir desse zoom, mostra o(s) nome(s) da(s) comunidade(s) direto no mapa
+
+    function textoRotuloCurto(p) {
+        let texto = p.nomes.length <= 2 ? p.nomes.join(', ') : `${p.nomes.slice(0, 2).join(', ')} +${p.nomes.length - 2}`;
+        const LIMITE_CARACTERES = 42;
+        if (texto.length > LIMITE_CARACTERES) texto = texto.slice(0, LIMITE_CARACTERES - 1).trim() + '…';
+        return texto;
+    }
+
     function renderMapa(pontos, ajustarView) {
         if (camadaPontos) mapaInstance.removeLayer(camadaPontos);
         camadaPontos = L.layerGroup();
+        marcadoresAtuais = [];
 
         // desenha do maior para o menor, assim os círculos pequenos não ficam
         // escondidos atrás dos grandes quando há sobreposição
@@ -1027,27 +1189,49 @@
             const marker = L.circleMarker([p.lat, p.lon], {
                 radius: raio, color: '#2E271F', weight: 0.5, fillColor: cor, fillOpacity: 0.55
             });
-            marker.bindTooltip(`${p.municipio} (${p.uf}): ${p.comunidades} comunidade(s)`, { className: 'ponto-tooltip', sticky: true });
 
-            const nomesAmostra = p.nomes.slice(0, 10).map(n => `<li>${n}</li>`).join('');
-            const maisTexto = p.nomes.length < p.comunidades ? `<div style="margin-top:6px;font-style:italic;color:#8A7C68;">e mais ${p.comunidades - p.nomes.length} comunidade(s) neste município. Veja a tabela completa abaixo.</div>` : '';
+            const nomesCompletos = p.nomes.map(n => `<li>${n}</li>`).join('');
             marker.bindPopup(`
                 <strong>${p.municipio} (${p.uf})</strong><br>
                 ${p.certidoes} certidão(ões) · ${p.comunidades} comunidade(s) certificada(s)<br>
                 ${p.moradores > 0 ? p.moradores.toLocaleString('pt-BR') + ' moradores declarados (piso)<br>' : ''}
-                <ul class="popup-lista">${nomesAmostra}</ul>
-                ${maisTexto}
-            `);
+                <ul class="popup-lista">${nomesCompletos}</ul>
+            `, { maxHeight: 220 });
+
+            marker._pontoInfo = p;
+            marker._modoRotulo = null;
+            marcadoresAtuais.push(marker);
             camadaPontos.addLayer(marker);
         });
 
         camadaPontos.addTo(mapaInstance);
+        atualizarModoRotulo();
 
         if (ajustarView && pontos.length && !mapaAjustadoInicialmente) {
             const bounds = L.latLngBounds(pontos.map(p => [p.lat, p.lon]));
             mapaInstance.fitBounds(bounds, { padding: [24, 24] });
             mapaAjustadoInicialmente = true;
         }
+    }
+
+    // Com o Brasil inteiro visível, escrever o nome de 1000+ comunidades no mapa
+    // seria ilegível: por isso o modo "resumo" (contagem, ao passar o mouse) só
+    // vira rótulo permanente com os nomes quando o usuário já deu zoom o suficiente.
+    function atualizarModoRotulo() {
+        if (!mapaInstance) return;
+        const zoomAlto = mapaInstance.getZoom() >= ZOOM_ROTULOS;
+        const modoDesejado = zoomAlto ? 'rotulo' : 'resumo';
+        marcadoresAtuais.forEach(marker => {
+            if (marker._modoRotulo === modoDesejado) return;
+            marker.unbindTooltip();
+            const p = marker._pontoInfo;
+            if (modoDesejado === 'rotulo') {
+                marker.bindTooltip(textoRotuloCurto(p), { className: 'ponto-rotulo', permanent: true, direction: 'right', offset: [4, 0] });
+            } else {
+                marker.bindTooltip(`${p.municipio} (${p.uf}): ${p.comunidades} comunidade(s)`, { className: 'ponto-tooltip', sticky: true });
+            }
+            marker._modoRotulo = modoDesejado;
+        });
     }
 
     // ============================================================
@@ -1063,6 +1247,13 @@
         ufs.forEach(u => { const o = document.createElement('option'); o.value = u; o.textContent = u; document.getElementById('filterUF').appendChild(o); });
         anos.forEach(a => { const o = document.createElement('option'); o.value = a; o.textContent = a; document.getElementById('filterAno').appendChild(o); });
         etapas.forEach(e => { const o = document.createElement('option'); o.value = e; o.textContent = e; document.getElementById('filterEtapa').appendChild(o); });
+
+        const ordemSituacoes = ['apenas_cert', 'incra', 'titulado', 'cdru'];
+        ordemSituacoes.forEach(chave => {
+            const o = document.createElement('option');
+            o.value = chave; o.textContent = SITUACOES[chave].rotulo;
+            document.getElementById('filterSituacao').appendChild(o);
+        });
     }
 
     // ============================================================
@@ -1079,6 +1270,7 @@
         const uf = document.getElementById('filterUF').value;
         const ano = document.getElementById('filterAno').value;
         const etapa = document.getElementById('filterEtapa').value;
+        const situacao = document.getElementById('filterSituacao').value;
         const busca = document.getElementById('filterBusca').value.toLowerCase().trim();
 
         dadosFiltrados = dados.filter(d => {
@@ -1086,6 +1278,7 @@
             if (uf && d.uf !== uf) return false;
             if (ano && d.ano !== ano) return false;
             if (etapa && d.etapa !== etapa) return false;
+            if (situacao && categorizaSituacao(d) !== situacao) return false;
             if (busca) {
                 const t = (d.comunidade + ' ' + d.municipio + ' ' + d.uf + ' ' + d.processo).toLowerCase();
                 if (!t.includes(busca)) return false;
@@ -1100,6 +1293,8 @@
         renderSituacaoTitulacao(dadosFiltrados);
         renderTempoCertificacao(dadosFiltrados);
         renderRanking(dadosFiltrados);
+        renderRitmoPortarias(dadosFiltrados);
+        renderConcentracao(dadosFiltrados);
         renderConstrutor();
         if (mapaInstance) renderMapa(agregarPontosMapa(dadosFiltrados));
         atualizarFaixaRecorte();
@@ -1307,16 +1502,18 @@
         renderSituacaoTitulacao(dados);
         renderTempoCertificacao(dados);
         renderRanking(dados);
+        renderRitmoPortarias(dados);
+        renderConcentracao(dados);
         initMapa();
         initQRCode();
         atualizarFaixaRecorte();
 
-        ['filterRegiao','filterUF','filterAno','filterEtapa'].forEach(id => {
+        ['filterRegiao','filterUF','filterAno','filterEtapa','filterSituacao'].forEach(id => {
             document.getElementById(id).addEventListener('change', aplicarFiltros);
         });
         document.getElementById('filterBusca').addEventListener('input', aplicarFiltros);
         document.getElementById('btnLimpar').addEventListener('click', () => {
-            ['filterRegiao','filterUF','filterAno','filterEtapa'].forEach(id => document.getElementById(id).value = '');
+            ['filterRegiao','filterUF','filterAno','filterEtapa','filterSituacao'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('filterBusca').value = '';
             aplicarFiltros();
         });
@@ -1325,10 +1522,10 @@
             th.addEventListener('click', () => ordenarDados(th.dataset.campo));
         });
 
-        document.getElementById('btnExportarCSV').addEventListener('click', () => baixarArquivo(paraCSV(dadosFiltrados), 'crq_selecao.csv', 'text/csv;charset=utf-8;'));
-        document.getElementById('btnExportarJSON').addEventListener('click', () => baixarArquivo(JSON.stringify(dadosFiltrados, null, 2), 'crq_selecao.json', 'application/json'));
-        document.getElementById('btnBaixarTudoCSV').addEventListener('click', () => baixarArquivo(paraCSV(dados), 'crq_base_completa.csv', 'text/csv;charset=utf-8;'));
-        document.getElementById('btnBaixarTudoJSON').addEventListener('click', () => baixarArquivo(JSON.stringify(dados, null, 2), 'crq_base_completa.json', 'application/json'));
+        document.getElementById('btnExportarCSV').addEventListener('click', () => baixarArquivo(paraCSV(dadosFiltrados), 'raizame_selecao.csv', 'text/csv;charset=utf-8;'));
+        document.getElementById('btnExportarJSON').addEventListener('click', () => baixarArquivo(JSON.stringify(dadosFiltrados, null, 2), 'raizame_selecao.json', 'application/json'));
+        document.getElementById('btnBaixarTudoCSV').addEventListener('click', () => baixarArquivo(paraCSV(dados), 'raizame_base_completa.csv', 'text/csv;charset=utf-8;'));
+        document.getElementById('btnBaixarTudoJSON').addEventListener('click', () => baixarArquivo(JSON.stringify(dados, null, 2), 'raizame_base_completa.json', 'application/json'));
 
         // toggle de métrica da série histórica
         document.querySelectorAll('#toggleMetricaSerie button').forEach(btn => {
@@ -1343,7 +1540,7 @@
         // construtor de cruzamentos
         document.getElementById('construtorDimensao').addEventListener('change', renderConstrutor);
         document.getElementById('construtorMetrica').addEventListener('change', renderConstrutor);
-        document.getElementById('btnBaixarCruzamento').addEventListener('click', () => baixarArquivo(paraCSVGenerico(ultimoCruzamento), 'cruzamento_crq.csv', 'text/csv;charset=utf-8;'));
+        document.getElementById('btnBaixarCruzamento').addEventListener('click', () => baixarArquivo(paraCSVGenerico(ultimoCruzamento), 'raizame_cruzamento.csv', 'text/csv;charset=utf-8;'));
         renderConstrutor();
     }
 
