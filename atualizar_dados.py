@@ -31,7 +31,7 @@ import re
 import sys
 import unicodedata
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timezone
 
 # ----------------------------------------------------------------------
 # CONFIGURAÇÃO
@@ -240,10 +240,12 @@ def gera_pagina(registros, sem_coordenada):
 
     total_registros = len(registros)
     total_comunidades = sum(int(r['crq']) if r['crq'].isdigit() else 0 for r in registros)
+    data_hoje = datetime.now(timezone.utc).strftime('%d/%m/%Y')
 
     tpl = tpl.replace('__TOTAL_REGISTROS__', f'{total_registros:,}'.replace(',', '.'))
     tpl = tpl.replace('__TOTAL_COMUNIDADES__', f'{total_comunidades:,}'.replace(',', '.'))
     tpl = tpl.replace('__NAO_GEOCODIFICADOS__', str(sem_coordenada))
+    tpl = tpl.replace('__DATA_ATUALIZACAO__', data_hoje)
     tpl = tpl.replace('__DATA_JSON__', json.dumps(registros, ensure_ascii=False))
 
     restantes = re.findall(r'__[A-Z_]+__', tpl)
@@ -253,7 +255,7 @@ def gera_pagina(registros, sem_coordenada):
     with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
         f.write(tpl)
 
-    print(f"{OUTPUT_PATH} gerado: {total_registros} certidões, {total_comunidades} comunidades.")
+    print(f"{OUTPUT_PATH} gerado: {total_registros} certidões, {total_comunidades} comunidades, data {data_hoje}.")
 
 
 def main():
