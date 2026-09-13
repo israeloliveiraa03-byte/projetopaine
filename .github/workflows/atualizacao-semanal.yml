@@ -1,0 +1,38 @@
+name: Atualização semanal dos dados (Raizame Dados)
+
+on:
+  schedule:
+    # 02:00 UTC toda segunda-feira = 23:00 (domingo) no horário de Brasília.
+    # Ajuste o horário aqui se quiser rodar em outro momento da semana.
+    - cron: "0 2 * * 1"
+  workflow_dispatch: {}   # permite rodar manualmente pela aba "Actions" do GitHub
+
+permissions:
+  contents: write   # necessário para o job poder commitar o index.html atualizado
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Rodar o script de atualização
+        run: python3 atualizar_dados.py
+
+      - name: Publicar o index.html atualizado (se algo mudou)
+        run: |
+          git config user.name "raizame-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if git diff --quiet -- index.html; then
+            echo "Nenhuma mudança na base de dados desde a última execução."
+          else
+            git add index.html
+            git commit -m "chore: atualização semanal dos dados (Raizame Dados)"
+            git push
+          fi
