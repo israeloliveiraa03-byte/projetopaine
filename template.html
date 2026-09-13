@@ -441,6 +441,39 @@
     </div>
 </section>
 
+<!-- ESPERA DESDE A CERTIFICAÇÃO -->
+<section class="bloco">
+    <div class="container">
+        <div class="secao-cabecalho">
+            <div>
+                <div class="rotulo">Backlog</div>
+                <h2>Há quanto tempo as comunidades certificadas esperam pela titulação?</h2>
+                <p class="descricao">Para as comunidades que ainda não constam como tituladas (situação "apenas certificada", "processo em andamento" ou "CDRU"), calcula o tempo decorrido entre o ano de certificação e hoje. Não mede quando a titulação vai sair, mas sim há quanto tempo o processo está parado desde o único marco de data que a base tem.</p>
+            </div>
+        </div>
+        <div id="destaqueEspera"></div>
+        <div class="analise-grid">
+            <div>
+                <p class="descricao" style="margin-bottom:12px;">Tempo médio de espera (ponderado pelo nº de comunidades), por região:</p>
+                <div class="stacked-wrapper"><canvas id="graficoEsperaRegiao"></canvas></div>
+            </div>
+            <div>
+                <p class="descricao" style="margin-bottom:12px;">Mesmo cálculo, por unidade federativa (ordenado da maior espera para a menor):</p>
+                <div class="tabela-scroll" style="max-height:280px;overflow-y:auto;">
+                    <table class="tabela-ranking" id="tabelaEsperaUF">
+                        <thead><tr><th>UF</th><th>Região</th><th>Comunidades pendentes</th><th>Espera média (anos)</th></tr></thead>
+                        <tbody id="corpoEsperaUF"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="caixa-aviso" style="margin-top:20px;">
+            <strong>Limitações deste cálculo</strong>
+            O "ano de certificação" é quando a FCP emitiu a certidão, não quando o processo de titulação no INCRA começou (essa data não existe na base). Ou seja, este número é um piso: mede a espera desde o marco mais antigo que temos, não necessariamente desde a abertura real do processo de titulação, que pode ter começado antes ou depois. Grupos com poucas comunidades (a coluna "Comunidades pendentes" mostra o tamanho de cada grupo) têm média menos confiável. Este cálculo não é uma previsão de quando a titulação vai sair.
+        </div>
+    </div>
+</section>
+
 <!-- SÉRIE HISTÓRICA -->
 <section class="bloco">
     <div class="container">
@@ -648,6 +681,11 @@
                     <strong>Limitações conhecidas da base</strong>
                     A certificação é autodeclaratória e não implica, por si só, titulação do território (etapa posterior, conduzida pelo INCRA ou por órgãos estaduais). O campo "Nº de moradores" está disponível apenas quando informado no processo original. Por isso, a soma de moradores deste painel é um piso, não o total real. 67 registros citam mais de um município; 16 registros têm código de IBGE com formatação irregular na planilha de origem, dos quais 2 não puderam ser localizados nem por nome. Esses casos foram documentados e não afetam a contagem oficial de certidões e comunidades, apenas a precisão do mapa. A coluna "População IBGE" da planilha original está com dado corrompido (coordenadas geográficas e números sem padrão em vez de população) em praticamente todos os poucos registros preenchidos; por isso ela não é usada em nenhuma análise deste painel. O campo "Porta de entrada" só passou a ser preenchido a partir de 2025, então não permite uma leitura histórica.
                 </div>
+                <div class="caixa-aviso" style="margin-top:14px;" id="caixaCorrecoes">
+                    <strong>Correções de dados aplicadas (<span id="numCorrecoes">0</span>)</strong>
+                    <span id="textoCorrecoes">A coluna "Região" da planilha da FCP é, tecnicamente, redundante: toda UF pertence a uma única região do Brasil, então isso pode ser conferido, e corrigido quando necessário, sem margem de interpretação. Antes de exibir os dados, o painel confere a região de cada registro contra a sua UF e corrige automaticamente as divergências (mantendo a UF como está, que não tem ambiguidade). A lista abaixo mostra exatamente o que foi corrigido nesta atualização, para que a mudança nunca fique escondida.</span>
+                    <ul class="popup-lista" id="listaCorrecoes" style="max-height:160px;margin-top:10px;"></ul>
+                </div>
             </div>
             <div class="cartao-fonte">
                 <h3>Baixar e conferir</h3>
@@ -693,7 +731,7 @@
             <img class="foto-autor" src="data:image/jpeg;base64,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" alt="Foto de Israel da Silva Oliveira" width="72" height="72">
             <div>
                 <strong>Sobre esta ferramenta</strong>
-                <p>Página desenvolvida por <strong style="display:inline;text-transform:none;letter-spacing:0;font-size:13px;">Israel da Silva Oliveira</strong>, doutorando em Antropologia Social (PPGAS, Museu Nacional, UFRJ), mestre em Antropologia Social e Graduado em Ciências Sociais (UFAL), pesquisador vinculado à Rede de Pesquisadoras e Pesquisadores Quilombolas da CONAQ.</p>
+                <p>Página desenvolvida por <strong style="display:inline;text-transform:none;letter-spacing:0;font-size:13px;">Israel da Silva Oliveira</strong>, doutorando em Antropologia Social (PPGAS, Museu Nacional, UFRJ), mestre em Antropologia Social e Graduado em Ciências Sociais (UFAL).</p>
                 <p>Currículo Lattes: <a href="https://lattes.cnpq.br/4743156179308228" target="_blank" rel="noopener">lattes.cnpq.br/4743156179308228</a></p>
                 <p>ORCID: <a href="https://orcid.org/0009-0005-4468-7478" target="_blank" rel="noopener">0009-0005-4468-7478</a></p>
                 <p>Contato: <a href="mailto:israel.oliveira@ics.ufal.br">israel.oliveira@ics.ufal.br</a></p>
@@ -714,6 +752,7 @@
 </footer>
 
 <script id="crq-data" type="application/json">__DATA_JSON__</script>
+<script id="correcoes-data" type="application/json">__CORRECOES_JSON__</script>
 
 <script>
     // ============================================================
@@ -728,6 +767,19 @@
     // CARREGAMENTO DOS DADOS (embutidos no próprio arquivo)
     // ============================================================
     const dados = JSON.parse(document.getElementById('crq-data').textContent);
+    const correcoesAplicadas = JSON.parse(document.getElementById('correcoes-data').textContent);
+
+    function renderCorrecoes() {
+        document.getElementById('numCorrecoes').textContent = correcoesAplicadas.length;
+        const lista = document.getElementById('listaCorrecoes');
+        if (!correcoesAplicadas.length) {
+            document.getElementById('textoCorrecoes').insertAdjacentHTML('afterend', '<div style="margin-top:8px;font-style:italic;color:#8A7C68;">Nenhuma divergência entre Região e UF encontrada nesta atualização.</div>');
+            return;
+        }
+        lista.innerHTML = correcoesAplicadas.map(c => `
+            <li>${c.comunidade}, ${c.municipio}/${c.uf} (certificada em ${c.ano || 's/d'}): Região constava "${c.regiao_original}", corrigida para "${c.regiao_corrigida}" com base na UF.</li>
+        `).join('');
+    }
 
     function formatDate(dateStr) {
         if (!dateStr || dateStr === '') return '';
@@ -890,6 +942,74 @@
                 scales: { x: { stacked:true, max:100, ticks:{callback:v=>v+'%'} }, y: { stacked:true } }
             }
         });
+    }
+
+    // ============================================================
+    // ESPERA DESDE A CERTIFICAÇÃO (para quem ainda não foi titulado)
+    // ============================================================
+    let chartEsperaRegiao = null;
+    const ANO_ATUAL = new Date().getFullYear();
+
+    function listaPendentesComEspera(lista) {
+        return lista
+            .filter(d => categorizaSituacao(d) !== 'titulado')
+            .map(d => ({ uf: d.uf, regiao: d.regiao, comunidades: parseInt(d.crq) || 0, ano: parseInt(d.ano) || null }))
+            .filter(d => d.ano && d.ano <= ANO_ATUAL)
+            .map(d => ({ ...d, espera: ANO_ATUAL - d.ano }));
+    }
+
+    function mediaPonderada(itens, pesoCampo, valorCampo) {
+        const pesoTotal = itens.reduce((s, i) => s + i[pesoCampo], 0);
+        if (!pesoTotal) return 0;
+        return itens.reduce((s, i) => s + i[valorCampo] * i[pesoCampo], 0) / pesoTotal;
+    }
+
+    function renderEspera(lista) {
+        const pendentes = listaPendentesComEspera(lista);
+        const totalComunidades = pendentes.reduce((s, i) => s + i.comunidades, 0);
+        const mediaNacional = mediaPonderada(pendentes, 'comunidades', 'espera');
+
+        const destaque = document.getElementById('destaqueEspera');
+        if (destaque) {
+            destaque.innerHTML = pendentes.length ? `
+                <div class="destaque-caixa">
+                    <div class="numero">${mediaNacional.toFixed(1)} anos de espera, em média</div>
+                    <div class="texto">Considerando ${totalComunidades.toLocaleString('pt-BR')} comunidade(s) certificada(s) e ainda não tituladas no recorte atual, contando do ano de certificação até hoje (${ANO_ATUAL}).</div>
+                </div>` : `
+                <div class="destaque-caixa">
+                    <div class="numero">Sem comunidades pendentes neste recorte</div>
+                    <div class="texto">Todas as comunidades do filtro atual já constam como tituladas, ou não há registros com ano de certificação válido.</div>
+                </div>`;
+        }
+
+        const porRegiao = ORDEM_REGIOES.map(r => mediaPonderada(pendentes.filter(p => p.regiao === r), 'comunidades', 'espera'));
+        const ctx = document.getElementById('graficoEsperaRegiao').getContext('2d');
+        if (chartEsperaRegiao) chartEsperaRegiao.destroy();
+        chartEsperaRegiao = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: ORDEM_REGIOES.map(capitalizarRegiao), datasets: [{ label: 'Espera média (anos)', data: porRegiao.map(v => +v.toFixed(1)), backgroundColor: ORDEM_REGIOES.map(r => CORES_REGIAO[r]) }] },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `${c.parsed.y} anos, em média` } } },
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'Anos' } } }
+            }
+        });
+
+        const grupos = {};
+        pendentes.forEach(p => {
+            if (!grupos[p.uf]) grupos[p.uf] = { uf: p.uf, regiao: p.regiao, itens: [] };
+            grupos[p.uf].itens.push(p);
+        });
+        const linhasUF = Object.values(grupos).map(g => ({
+            uf: g.uf,
+            regiao: g.regiao,
+            comunidades: g.itens.reduce((s, i) => s + i.comunidades, 0),
+            espera: mediaPonderada(g.itens, 'comunidades', 'espera')
+        })).sort((a, b) => b.espera - a.espera);
+
+        document.getElementById('corpoEsperaUF').innerHTML = linhasUF.length ? linhasUF.map(l => `
+            <tr><td>${l.uf}</td><td>${capitalizarRegiao(l.regiao)}</td><td>${l.comunidades.toLocaleString('pt-BR')}</td><td class="num">${l.espera.toFixed(1)}</td></tr>
+        `).join('') : `<tr><td colspan="4" class="estado-vazio">Nenhuma comunidade pendente no recorte atual.</td></tr>`;
     }
 
     // ============================================================
@@ -1293,6 +1413,7 @@
         renderGrafico();
         renderIndicadores(dadosFiltrados);
         renderSituacaoTitulacao(dadosFiltrados);
+        renderEspera(dadosFiltrados);
         renderTempoCertificacao(dadosFiltrados);
         renderRanking(dadosFiltrados);
         renderRitmoPortarias(dadosFiltrados);
@@ -1498,10 +1619,12 @@
 
     function init() {
         populateFilters();
+        renderCorrecoes();
         renderIndicadores(dados);
         renderTabela();
         renderGrafico();
         renderSituacaoTitulacao(dados);
+        renderEspera(dados);
         renderTempoCertificacao(dados);
         renderRanking(dados);
         renderRitmoPortarias(dados);
