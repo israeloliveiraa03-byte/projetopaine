@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
     :root {
         --verde-institucional: #3B5D42;
@@ -249,6 +250,52 @@
     .tag-situacao.incra { background:#FEF3C7; color:#92400E; }
     .tag-situacao.apenas_cert { background:#F3F4F6; color:#4B5563; }
     .tag-situacao.cdru { background:#DBEAFE; color:#1E40AF; }
+
+    /* ===== NAVEGAÇÃO RÁPIDA ENTRE SEÇÕES ===== */
+    .nav-secoes {
+        position: sticky; top: 0; z-index: 60;
+        display: flex; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+        padding: 10px 16px; background: var(--verde-escuro);
+        scrollbar-width: none;
+    }
+    .nav-secoes::-webkit-scrollbar { display: none; }
+    .nav-secoes a {
+        flex-shrink: 0; white-space: nowrap; font-family:'Inter',sans-serif; font-size: 12px; font-weight: 600;
+        color: rgba(255,255,255,0.85); text-decoration: none; padding: 7px 14px;
+        border: 1px solid rgba(255,255,255,0.25); border-radius: 999px; transition: all 0.15s;
+    }
+    .nav-secoes a:hover, .nav-secoes a:active { background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.5); }
+    section.bloco { scroll-margin-top: 90px; }
+
+    /* ===== BOTÃO VOLTAR AO TOPO ===== */
+    .botao-topo {
+        position: fixed; right: 18px; bottom: 18px; z-index: 90;
+        width: 44px; height: 44px; border-radius: 50%; border: none;
+        background: var(--verde-institucional); color: #fff; font-size: 20px; line-height: 1;
+        box-shadow: 0 2px 10px rgba(36,56,42,0.4); cursor: pointer;
+        opacity: 0; pointer-events: none; transform: translateY(10px);
+        transition: opacity 0.2s, transform 0.2s;
+    }
+    .botao-topo.visivel { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .botao-topo:hover { background: var(--verde-escuro); }
+
+    /* ===== BOTÃO DE BAIXAR IMAGEM DE GRÁFICO ===== */
+    .botao-baixar-imagem {
+        position: absolute; top: 6px; right: 6px; z-index: 5;
+        width: 30px; height: 30px; border-radius: 4px; border: 1px solid var(--borda);
+        background: rgba(251,246,234,0.92); color: var(--verde-escuro); font-size: 14px;
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+        transition: background 0.15s;
+    }
+    .botao-baixar-imagem:hover { background: var(--branco); border-color: var(--verde-institucional); }
+    .aviso-download-mapa { font-size: 11px; color: var(--cinza-medio); margin-top: 8px; font-style: italic; }
+
+    @media (max-width: 640px) {
+        .nav-secoes { padding: 8px 12px; gap: 6px; }
+        .nav-secoes a { padding: 6px 11px; font-size: 11px; }
+        .faixa-recorte { top: 38px; }
+        .botao-topo { width: 40px; height: 40px; right: 14px; bottom: 14px; }
+    }
 </style>
 <style>
     /* ===== IDENTIDADE ORGÂNICA (Raizame Dados) ===== */
@@ -261,7 +308,7 @@
     .subtitulo-nome { font-family:'Inter',sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dourado); margin-top: 4px; }
 
     .bloco-filtros { background: var(--cinza-fundo); border-top: 1px solid var(--cinza-claro); border-bottom: 1px solid var(--cinza-claro); }
-    .faixa-recorte { position: sticky; top: 0; z-index: 50; background: var(--verde-escuro); color: rgba(255,255,255,0.92); font-size: 12px; letter-spacing: 0.03em; text-align: center; padding: 8px 16px; }
+    .faixa-recorte { position: sticky; top: 46px; z-index: 50; background: var(--verde-escuro); color: rgba(255,255,255,0.92); font-size: 12px; letter-spacing: 0.03em; text-align: center; padding: 8px 16px; }
 
     .rodape-perfil { display:flex; gap:16px; align-items:flex-start; min-width: 0; }
     .rodape-perfil > div { min-width: 0; }
@@ -332,8 +379,28 @@
     </div>
 </header>
 
+<nav class="nav-secoes" aria-label="Navegação rápida entre seções">
+    <a href="#sec-indicadores">Indicadores</a>
+    <a href="#sec-filtros">Filtros</a>
+    <a href="#sec-mapa">Mapa</a>
+    <a href="#sec-situacao">Titulação</a>
+    <a href="#sec-espera">Espera</a>
+    <a href="#sec-serie">Série histórica</a>
+    <a href="#sec-ritmo">Portarias</a>
+    <a href="#sec-tempo">Tempo</a>
+    <a href="#sec-tabela">Tabela</a>
+    <a href="#sec-ranking">Ranking</a>
+    <a href="#sec-concentracao">Concentração</a>
+    <a href="#sec-construtor">Cruzamentos</a>
+    <a href="#sec-fontes">Fontes</a>
+    <a href="#sec-apoio">Apoio</a>
+</nav>
+
+<button id="botaoTopo" class="botao-topo" aria-label="Voltar ao topo" title="Voltar ao topo">↑</button>
+
+
 <!-- INDICADORES -->
-<section class="bloco">
+<section class="bloco" id="sec-indicadores">
     <div class="container">
         <div class="secao-cabecalho">
             <div>
@@ -347,7 +414,7 @@
 </section>
 
 <!-- FILTROS -->
-<section class="bloco bloco-filtros">
+<section class="bloco bloco-filtros" id="sec-filtros">
     <div class="container">
         <div class="secao-cabecalho">
             <div>
@@ -392,7 +459,7 @@
 <div class="faixa-recorte" id="faixaRecorte"></div>
 
 <!-- MAPA -->
-<section class="bloco">
+<section class="bloco" id="sec-mapa">
     <div class="container">
         <div class="secao-cabecalho">
             <div>
@@ -414,7 +481,7 @@
 </section>
 
 <!-- SITUAÇÃO DA TITULAÇÃO -->
-<section class="bloco">
+<section class="bloco" id="sec-situacao">
     <div class="container">
         <div class="secao-cabecalho">
             <div>
@@ -442,7 +509,7 @@
 </section>
 
 <!-- ESPERA DESDE A CERTIFICAÇÃO -->
-<section class="bloco">
+<section class="bloco" id="sec-espera">
     <div class="container">
         <div class="secao-cabecalho">
             <div>
@@ -475,7 +542,7 @@
 </section>
 
 <!-- SÉRIE HISTÓRICA -->
-<section class="bloco">
+<section class="bloco" id="sec-serie">
     <div class="container">
         <div class="secao-cabecalho">
             <div>
@@ -496,7 +563,7 @@
 </section>
 
 <!-- RITMO DE EMISSÃO -->
-<section class="bloco">
+<section class="bloco" id="sec-ritmo">
     <div class="container">
         <div class="secao-cabecalho">
             <div>
@@ -515,7 +582,7 @@
 </section>
 
 <!-- TEMPO ATÉ A CERTIFICAÇÃO -->
-<section class="bloco">
+<section class="bloco" id="sec-tempo">
     <div class="container">
         <div class="secao-cabecalho">
             <div>
@@ -532,7 +599,7 @@
 </section>
 
 <!-- TABELA -->
-<section class="bloco">
+<section class="bloco" id="sec-tabela">
     <div class="container">
         <div class="secao-cabecalho">
             <div>
@@ -573,7 +640,7 @@
 </section>
 
 <!-- MAIORES TERRITÓRIOS -->
-<section class="bloco">
+<section class="bloco" id="sec-ranking">
     <div class="container">
         <div class="secao-cabecalho">
             <div>
@@ -593,7 +660,7 @@
 </section>
 
 <!-- CONCENTRAÇÃO TERRITORIAL -->
-<section class="bloco">
+<section class="bloco" id="sec-concentracao">
     <div class="container">
         <div class="secao-cabecalho">
             <div>
@@ -609,7 +676,7 @@
 </section>
 
 <!-- CONSTRUTOR DE CRUZAMENTOS -->
-<section class="bloco">
+<section class="bloco" id="sec-construtor">
     <div class="container">
         <div class="secao-cabecalho">
             <div>
@@ -659,7 +726,7 @@
 </section>
 
 <!-- FONTES E VERACIDADE -->
-<section class="bloco">
+<section class="bloco" id="sec-fontes">
     <div class="container">
         <div class="secao-cabecalho">
             <div>
@@ -682,9 +749,14 @@
                     A certificação é autodeclaratória e não implica, por si só, titulação do território (etapa posterior, conduzida pelo INCRA ou por órgãos estaduais). O campo "Nº de moradores" está disponível apenas quando informado no processo original. Por isso, a soma de moradores deste painel é um piso, não o total real. 67 registros citam mais de um município; 16 registros têm código de IBGE com formatação irregular na planilha de origem, dos quais 2 não puderam ser localizados nem por nome. Esses casos foram documentados e não afetam a contagem oficial de certidões e comunidades, apenas a precisão do mapa. A coluna "População IBGE" da planilha original está com dado corrompido (coordenadas geográficas e números sem padrão em vez de população) em praticamente todos os poucos registros preenchidos; por isso ela não é usada em nenhuma análise deste painel. O campo "Porta de entrada" só passou a ser preenchido a partir de 2025, então não permite uma leitura histórica.
                 </div>
                 <div class="caixa-aviso" style="margin-top:14px;" id="caixaCorrecoes">
-                    <strong>Correções de dados aplicadas (<span id="numCorrecoes">0</span>)</strong>
+                    <strong>Correções de região aplicadas (<span id="numCorrecoes">0</span>)</strong>
                     <span id="textoCorrecoes">A coluna "Região" da planilha da FCP é, tecnicamente, redundante: toda UF pertence a uma única região do Brasil, então isso pode ser conferido, e corrigido quando necessário, sem margem de interpretação. Antes de exibir os dados, o painel confere a região de cada registro contra a sua UF e corrige automaticamente as divergências (mantendo a UF como está, que não tem ambiguidade). A lista abaixo mostra exatamente o que foi corrigido nesta atualização, para que a mudança nunca fique escondida.</span>
                     <ul class="popup-lista" id="listaCorrecoes" style="max-height:160px;margin-top:10px;"></ul>
+                </div>
+                <div class="caixa-aviso" style="margin-top:14px;" id="caixaCorrecoesGeo">
+                    <strong>Correções de geocodificação aplicadas (<span id="numCorrecoesGeo">0</span>)</strong>
+                    <span id="textoCorrecoesGeo">Municípios com nomes parecidos às vezes têm o código IBGE trocado na planilha de origem (ex.: o código de "Curaçá/BA" preenchido num registro de "Curuçá/PA"). Quando o código informado aponta para um município de uma UF diferente da UF do próprio registro, o painel não usa esse código para posicionar o ponto no mapa: em vez disso, localiza o município pelo nome, dentro da UF que o registro já informa. A coluna "Código do IBGE" da tabela abaixo continua mostrando o valor original da planilha, sem alteração; só a posição no mapa é recalculada.</span>
+                    <ul class="popup-lista" id="listaCorrecoesGeo" style="max-height:160px;margin-top:10px;"></ul>
                 </div>
             </div>
             <div class="cartao-fonte">
@@ -702,7 +774,7 @@
 </section>
 
 <!-- APOIO -->
-<section class="bloco">
+<section class="bloco" id="sec-apoio">
     <div class="container">
         <div class="secao-cabecalho">
             <div>
@@ -753,6 +825,7 @@
 
 <script id="crq-data" type="application/json">__DATA_JSON__</script>
 <script id="correcoes-data" type="application/json">__CORRECOES_JSON__</script>
+<script id="correcoes-geo-data" type="application/json">__CORRECOES_GEO_JSON__</script>
 
 <script>
     // ============================================================
@@ -768,17 +841,28 @@
     // ============================================================
     const dados = JSON.parse(document.getElementById('crq-data').textContent);
     const correcoesAplicadas = JSON.parse(document.getElementById('correcoes-data').textContent);
+    const correcoesGeoAplicadas = JSON.parse(document.getElementById('correcoes-geo-data').textContent);
 
     function renderCorrecoes() {
         document.getElementById('numCorrecoes').textContent = correcoesAplicadas.length;
         const lista = document.getElementById('listaCorrecoes');
         if (!correcoesAplicadas.length) {
             document.getElementById('textoCorrecoes').insertAdjacentHTML('afterend', '<div style="margin-top:8px;font-style:italic;color:#8A7C68;">Nenhuma divergência entre Região e UF encontrada nesta atualização.</div>');
-            return;
+        } else {
+            lista.innerHTML = correcoesAplicadas.map(c => `
+                <li>${c.comunidade}, ${c.municipio}/${c.uf} (certificada em ${c.ano || 's/d'}): Região constava "${c.regiao_original}", corrigida para "${c.regiao_corrigida}" com base na UF.</li>
+            `).join('');
         }
-        lista.innerHTML = correcoesAplicadas.map(c => `
-            <li>${c.comunidade}, ${c.municipio}/${c.uf} (certificada em ${c.ano || 's/d'}): Região constava "${c.regiao_original}", corrigida para "${c.regiao_corrigida}" com base na UF.</li>
-        `).join('');
+
+        document.getElementById('numCorrecoesGeo').textContent = correcoesGeoAplicadas.length;
+        const listaGeo = document.getElementById('listaCorrecoesGeo');
+        if (!correcoesGeoAplicadas.length) {
+            document.getElementById('textoCorrecoesGeo').insertAdjacentHTML('afterend', '<div style="margin-top:8px;font-style:italic;color:#8A7C68;">Nenhum código IBGE incompatível com a UF do registro encontrado nesta atualização.</div>');
+        } else {
+            listaGeo.innerHTML = correcoesGeoAplicadas.map(c => `
+                <li>${c.comunidade}, ${c.municipio}/${c.uf}: código informado (${c.codigo_informado}) pertence a ${c.municipio_do_codigo}/${c.uf_do_codigo}; ${c.resolvido ? 'posição no mapa recalculada pelo nome do município.' : 'não foi possível localizar pelo nome; sem posição no mapa.'}</li>
+            `).join('');
+        }
     }
 
     function formatDate(dateStr) {
@@ -1667,10 +1751,107 @@
         document.getElementById('construtorMetrica').addEventListener('change', renderConstrutor);
         document.getElementById('btnBaixarCruzamento').addEventListener('click', () => baixarArquivo(paraCSVGenerico(ultimoCruzamento), 'raizame_cruzamento.csv', 'text/csv;charset=utf-8;'));
         renderConstrutor();
+
+        initBotaoTopo();
+        initBotoesBaixarImagem();
+        initBotaoBaixarMapa();
+    }
+
+    // ============================================================
+    // VOLTAR AO TOPO
+    // ============================================================
+    function initBotaoTopo() {
+        const botao = document.getElementById('botaoTopo');
+        if (!botao) return;
+        window.addEventListener('scroll', () => {
+            botao.classList.toggle('visivel', window.scrollY > 600);
+        });
+        botao.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    }
+
+    // ============================================================
+    // BAIXAR GRÁFICOS COMO IMAGEM (PNG)
+    // ============================================================
+    function baixarImagemDataURL(dataUrl, nomeArquivo) {
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = nomeArquivo;
+        a.click();
+    }
+
+    function criarBotaoBaixarGrafico(wrapperEl, obterChart, nomeArquivo, tituloBotao) {
+        if (!wrapperEl || wrapperEl.querySelector('.botao-baixar-imagem')) return;
+        const botao = document.createElement('button');
+        botao.className = 'botao-baixar-imagem';
+        botao.type = 'button';
+        botao.innerHTML = '⬇';
+        botao.title = tituloBotao || 'Baixar este gráfico como imagem (PNG)';
+        botao.setAttribute('aria-label', botao.title);
+        botao.addEventListener('click', () => {
+            const chart = obterChart();
+            if (!chart) return;
+            baixarImagemDataURL(chart.toBase64Image('image/png', 1), nomeArquivo);
+        });
+        wrapperEl.appendChild(botao);
+    }
+
+    function initBotoesBaixarImagem() {
+        criarBotaoBaixarGrafico(document.getElementById('graficoAno')?.parentElement, () => chartInstance, 'raizame_serie_historica.png');
+        criarBotaoBaixarGrafico(document.getElementById('graficoRitmoPortarias')?.parentElement, () => chartRitmoPortarias, 'raizame_ritmo_portarias.png');
+        criarBotaoBaixarGrafico(document.getElementById('graficoTempoDecada')?.parentElement, () => chartTempoDecada, 'raizame_tempo_por_decada.png');
+        criarBotaoBaixarGrafico(document.getElementById('graficoConcentracao')?.parentElement, () => chartConcentracao, 'raizame_concentracao.png');
+        criarBotaoBaixarGrafico(document.getElementById('graficoEsperaRegiao')?.parentElement, () => chartEsperaRegiao, 'raizame_espera_por_regiao.png');
+        criarBotaoBaixarGrafico(document.getElementById('graficoConstrutor')?.parentElement, () => chartConstrutor, 'raizame_cruzamento.png');
+        criarBotaoBaixarGrafico(document.getElementById('graficoSituacaoDonut')?.parentElement, () => chartDonutSituacao, 'raizame_situacao_titulacao.png');
+        criarBotaoBaixarGrafico(document.getElementById('graficoSituacaoRegiao')?.parentElement, () => chartRegiaoSituacao, 'raizame_situacao_por_regiao.png');
+    }
+
+    // ============================================================
+    // BAIXAR O MAPA COMO IMAGEM
+    // Tenta com html2canvas; como os tiles vêm de um servidor externo
+    // (OpenStreetMap) sem cabeçalho de CORS liberado, alguns navegadores
+    // bloqueiam a leitura do canvas resultante. Quando isso acontece,
+    // avisa em vez de falhar silenciosamente.
+    // ============================================================
+    function initBotaoBaixarMapa() {
+        const wrapper = document.querySelector('.mapa-wrapper');
+        if (!wrapper || typeof html2canvas === 'undefined') return;
+        const botao = document.createElement('button');
+        botao.className = 'botao-baixar-imagem';
+        botao.type = 'button';
+        botao.innerHTML = '⬇';
+        botao.title = 'Baixar o mapa como imagem (PNG)';
+        botao.setAttribute('aria-label', botao.title);
+        botao.addEventListener('click', () => {
+            const avisoAntigo = wrapper.parentElement.querySelector('.aviso-download-mapa');
+            if (avisoAntigo) avisoAntigo.remove();
+            html2canvas(document.getElementById('mapa'), { useCORS: true, allowTaint: false })
+                .then(canvas => {
+                    baixarImagemDataURL(canvas.toDataURL('image/png'), 'raizame_mapa.png');
+                })
+                .catch(() => {
+                    const aviso = document.createElement('div');
+                    aviso.className = 'aviso-download-mapa';
+                    aviso.textContent = 'Não foi possível gerar a imagem do mapa neste navegador (limitação de segurança dos mapas com imagens de fundo externas). Tente uma captura de tela da área do mapa como alternativa.';
+                    wrapper.insertAdjacentElement('afterend', aviso);
+                });
+        });
+        wrapper.appendChild(botao);
     }
 
     window.mudarPagina = mudarPagina;
     document.addEventListener('DOMContentLoaded', init);
+</script>
+<!-- VLibras (Governo Federal): tradução automática para Língua Brasileira de Sinais -->
+<div vw class="enabled">
+  <div vw-access-button class="active"></div>
+  <div vw-plugin-wrapper>
+    <div class="vw-plugin-top-wrapper"></div>
+  </div>
+</div>
+<script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+<script>
+  new window.VLibras.Widget('https://vlibras.gov.br/app');
 </script>
 </body>
 </html>

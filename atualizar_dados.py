@@ -230,7 +230,9 @@ def carrega_coordenadas():
     for linha in leitor:
         lat, lon = float(linha['latitude']), float(linha['longitude'])
         uf = UF_POR_CODIGO.get(int(linha['codigo_uf']), '')
-        por_codigo[linha['codigo_ibge']] = (lat, lon)
+        # guarda também a UF e o nome do município do código, para conseguirmos
+        # detectar quando o código IBGE da planilha aponta para outro município
+        por_codigo[linha['codigo_ibge']] = (lat, lon, uf, linha['nome'])
         por_nome_uf[(normaliza_nome(linha['nome']), uf)] = (lat, lon)
     print(f"{len(por_codigo)} municípios carregados.")
     return por_codigo, por_nome_uf
@@ -244,30 +246,57 @@ def extrai_codigos(ibge_bruto):
 
 
 def geocodifica(registros, por_codigo, por_nome_uf):
+    """Geocodifica cada registro por município. Quando o código IBGE informado
+    na planilha aponta para um município de outra UF (ex.: código de Curaçá/BA
+    usado num registro de Curuçá/PA — nomes parecidos, municípios diferentes),
+    o código é descartado e a geocodificação cai para busca por nome + UF do
+    próprio registro, que é o dado em que dá pra confiar nesse caso. Cada
+    ocorrência é registrada em `correcoes_geo` para aparecer na página."""
     sem_coordenada = 0
+    correcoes_geo = []
     for r in registros:
+        uf_registro = r['uf'].strip().upper()
         coord = None
+        codigo_encontrado_no_dicionario = False
         for codigo in extrai_codigos(r['ibge']):
             codigo_limpo = re.sub(r'\D', '', codigo)
             if codigo_limpo in por_codigo:
-                coord = por_codigo[codigo_limpo]
-                break
-        if coord is None:
+                codigo_encontrado_no_dicionario = True
+                lat, lon, uf_do_codigo, nome_do_codigo = por_codigo[codigo_limpo]
+                if uf_do_codigo == uf_registro:
+                    coord = (lat, lon)
+                else:
+                    # código não bate com a UF do registro: não confia nele,
+                    # tenta resolver pelo nome do município + UF do registro
+                    primeiro_municipio = re.split(r'[|/]', r['municipio'])[0].strip()
+                    alternativa = por_nome_uf.get((normaliza_nome(primeiro_municipio), uf_registro))
+                    correcoes_geo.append({
+                        'municipio': r['municipio'], 'comunidade': r['comunidade'], 'uf': uf_registro,
+                        'codigo_informado': codigo_limpo, 'municipio_do_codigo': nome_do_codigo,
+                        'uf_do_codigo': uf_do_codigo, 'processo': r['processo'], 'ano': r['ano'],
+                        'resolvido': alternativa is not None,
+                    })
+                    coord = alternativa
+                break  # já achou um código presente no dicionário, não olha os demais
+        if not codigo_encontrado_no_dicionario:
+            # nenhum dos códigos da célula existe no dicionário: tenta direto por nome + UF
             primeiro_municipio = re.split(r'[|/]', r['municipio'])[0].strip()
-            coord = por_nome_uf.get((normaliza_nome(primeiro_municipio), r['uf']))
+            coord = por_nome_uf.get((normaliza_nome(primeiro_municipio), uf_registro))
         if coord:
             r['lat'], r['lon'] = round(coord[0], 4), round(coord[1], 4)
         else:
             r['lat'], r['lon'] = None, None
             sem_coordenada += 1
+    if correcoes_geo:
+        print(f"{len(correcoes_geo)} código(s) IBGE incompatível(is) com a UF do registro; geocodificação recalculada por nome + UF.")
     print(f"{sem_coordenada} registro(s) não geocodificado(s).")
-    return sem_coordenada
+    return sem_coordenada, correcoes_geo
 
 
 # ----------------------------------------------------------------------
 # GERAÇÃO DO index.html
 # ----------------------------------------------------------------------
-def gera_pagina(registros, sem_coordenada, correcoes):
+def gera_pagina(registros, sem_coordenada, correcoes, correcoes_geo):
     with open(TEMPLATE_PATH, encoding='utf-8') as f:
         tpl = f.read()
 
@@ -280,6 +309,7 @@ def gera_pagina(registros, sem_coordenada, correcoes):
     tpl = tpl.replace('__NAO_GEOCODIFICADOS__', str(sem_coordenada))
     tpl = tpl.replace('__DATA_ATUALIZACAO__', data_hoje)
     tpl = tpl.replace('__CORRECOES_JSON__', json.dumps(correcoes, ensure_ascii=False))
+    tpl = tpl.replace('__CORRECOES_GEO_JSON__', json.dumps(correcoes_geo, ensure_ascii=False))
     tpl = tpl.replace('__DATA_JSON__', json.dumps(registros, ensure_ascii=False))
 
     restantes = re.findall(r'__[A-Z_]+__', tpl)
@@ -290,7 +320,8 @@ def gera_pagina(registros, sem_coordenada, correcoes):
         f.write(tpl)
 
     print(f"{OUTPUT_PATH} gerado: {total_registros} certidões, {total_comunidades} comunidades, "
-          f"data {data_hoje}, {len(correcoes)} correção(ões) de região.")
+          f"data {data_hoje}, {len(correcoes)} correção(ões) de região, "
+          f"{len(correcoes_geo)} correção(ões) de geocodificação.")
 
 
 def main():
@@ -304,9 +335,9 @@ def main():
         sys.exit(1)
 
     por_codigo, por_nome_uf = carrega_coordenadas()
-    sem_coordenada = geocodifica(registros, por_codigo, por_nome_uf)
+    sem_coordenada, correcoes_geo = geocodifica(registros, por_codigo, por_nome_uf)
     correcoes = corrige_regioes(registros)
-    gera_pagina(registros, sem_coordenada, correcoes)
+    gera_pagina(registros, sem_coordenada, correcoes, correcoes_geo)
 
 
 if __name__ == "__main__":
