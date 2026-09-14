@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -839,6 +840,10 @@
     // ============================================================
     // CARREGAMENTO DOS DADOS (embutidos no próprio arquivo)
     // ============================================================
+    if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+        Chart.register(ChartDataLabels);
+    }
+
     const dados = JSON.parse(document.getElementById('crq-data').textContent);
     const correcoesAplicadas = JSON.parse(document.getElementById('correcoes-data').textContent);
     const correcoesGeoAplicadas = JSON.parse(document.getElementById('correcoes-geo-data').textContent);
@@ -998,7 +1003,18 @@
         chartDonutSituacao = new Chart(ctx, {
             type: 'doughnut',
             data: { labels: ordem.map(k=>SITUACOES[k].rotulo), datasets: [{ data: valores, backgroundColor: cores, borderWidth: 2, borderColor: '#fff' }] },
-            options: { responsive:true, maintainAspectRatio:false, plugins: { legend: { display:false }, tooltip: { callbacks: { label: (c) => `${c.label}: ${c.parsed} (${(100*c.parsed/total).toFixed(1)}%)` } } } }
+            options: {
+                responsive:true, maintainAspectRatio:false,
+                plugins: {
+                    legend: { display:false },
+                    tooltip: { callbacks: { label: (c) => `${c.label}: ${c.parsed} (${(100*c.parsed/total).toFixed(1)}%)` } },
+                    datalabels: {
+                        color: '#fff', font: { family:'Inter', size: 12, weight: '700' },
+                        formatter: (v) => v > 0 ? `${(100*v/total).toFixed(0)}%` : '',
+                        display: (ctx) => ctx.dataset.data[ctx.dataIndex] / total > 0.03
+                    }
+                }
+            }
         });
 
         document.getElementById('legendaSituacao').innerHTML = ordem.map(k => `
@@ -1022,7 +1038,14 @@
             data: { labels: regioes, datasets: datasetsRegiao },
             options: {
                 indexAxis: 'y', responsive:true, maintainAspectRatio:false,
-                plugins: { legend: { display:false }, tooltip: { callbacks: { label:(c)=>`${c.dataset.label}: ${c.parsed.x}%` } } },
+                plugins: {
+                    legend: { display:false },
+                    tooltip: { callbacks: { label:(c)=>`${c.dataset.label}: ${c.parsed.x}%` } },
+                    datalabels: {
+                        color: '#fff', font: { family:'Inter', size: 10, weight: '700' },
+                        formatter: (v) => v >= 6 ? `${v.toFixed(0)}%` : ''
+                    }
+                },
                 scales: { x: { stacked:true, max:100, ticks:{callback:v=>v+'%'} }, y: { stacked:true } }
             }
         });
@@ -1074,7 +1097,11 @@
             data: { labels: ORDEM_REGIOES.map(capitalizarRegiao), datasets: [{ label: 'Espera média (anos)', data: porRegiao.map(v => +v.toFixed(1)), backgroundColor: ORDEM_REGIOES.map(r => CORES_REGIAO[r]) }] },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `${c.parsed.y} anos, em média` } } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: (c) => `${c.parsed.y} anos, em média` } },
+                    datalabels: { anchor: 'end', align: 'top', color: '#2E271F', font: { family:'Inter', size: 11, weight: '700' }, formatter: (v) => v.toFixed(1) }
+                },
                 scales: { y: { beginAtZero: true, title: { display: true, text: 'Anos' } } }
             }
         });
@@ -1123,7 +1150,14 @@
         chartTempoDecada = new Chart(ctx, {
             type: 'bar',
             data: { labels: decadas.map(d=>'Processos abertos na década de '+d.replace('s','')), datasets: [{ label:'Anos até a certificação', data: medias, backgroundColor:'#A67C00' }] },
-            options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:(c)=>`${c.parsed.y} anos (média)`}}}, scales:{ y:{beginAtZero:true, title:{display:true,text:'Anos'}} } }
+            options: {
+                responsive:true, maintainAspectRatio:false,
+                plugins:{
+                    legend:{display:false}, tooltip:{callbacks:{label:(c)=>`${c.parsed.y} anos (média)`}},
+                    datalabels: { anchor:'end', align:'top', color:'#2E271F', font:{family:'Inter', size:11, weight:'700'}, formatter:(v)=>v.toFixed(1) }
+                },
+                scales:{ y:{beginAtZero:true, title:{display:true,text:'Anos'}} }
+            }
         });
 
         document.getElementById('avisoAnomaliasTempo').innerHTML = `<strong>Inconsistência de datas identificada</strong>${anomalias} registro(s) no recorte atual têm a data de abertura registrada como posterior à data de certificação. Provavelmente é uma correção ou reabertura do processo, registrada na planilha sem atualização da data original. Esses registros foram excluídos apenas do cálculo de tempo de tramitação (continuam nas demais análises e na tabela).`;
@@ -1167,8 +1201,10 @@
             data: {
                 labels: anos,
                 datasets: [
-                    { type: 'bar', label: 'Nº de portarias distintas', data: nPortarias, backgroundColor: '#C9973D', order: 2, yAxisID: 'y' },
-                    { type: 'line', label: 'Média de comunidades por portaria', data: mediaPorPortaria, borderColor: '#6B4226', backgroundColor: '#6B4226', tension: 0.25, order: 1, yAxisID: 'y1', pointRadius: 3 }
+                    { type: 'bar', label: 'Nº de portarias distintas', data: nPortarias, backgroundColor: '#C9973D', order: 2, yAxisID: 'y',
+                      datalabels: { anchor:'end', align:'top', color:'#8A5A1E', font:{family:'Inter', size:9, weight:'700'}, formatter:(v)=>v } },
+                    { type: 'line', label: 'Média de comunidades por portaria', data: mediaPorPortaria, borderColor: '#6B4226', backgroundColor: '#6B4226', tension: 0.25, order: 1, yAxisID: 'y1', pointRadius: 3,
+                      datalabels: { anchor:'end', align:'bottom', color:'#6B4226', font:{family:'Inter', size:9, weight:'700'}, formatter:(v)=>v.toFixed(1) } }
                 ]
             },
             options: {
@@ -1218,8 +1254,10 @@
             data: {
                 labels: top15.map(([k]) => k),
                 datasets: [
-                    { type: 'bar', label: 'Comunidades certificadas', data: top15.map(([,v])=>v), backgroundColor: '#B85C2E', order: 2, yAxisID: 'y' },
-                    { type: 'line', label: '% acumulado do total', data: pctAcumulado, borderColor: '#24382A', backgroundColor: '#24382A', tension: 0.2, order: 1, yAxisID: 'y1', pointRadius: 3 }
+                    { type: 'bar', label: 'Comunidades certificadas', data: top15.map(([,v])=>v), backgroundColor: '#B85C2E', order: 2, yAxisID: 'y',
+                      datalabels: { anchor:'end', align:'top', color:'#8A421E', font:{family:'Inter', size:10, weight:'700'}, formatter:(v)=>v } },
+                    { type: 'line', label: '% acumulado do total', data: pctAcumulado, borderColor: '#24382A', backgroundColor: '#24382A', tension: 0.2, order: 1, yAxisID: 'y1', pointRadius: 3,
+                      datalabels: { anchor:'end', align:'bottom', color:'#24382A', font:{family:'Inter', size:9, weight:'700'}, formatter:(v)=>v.toFixed(0)+'%' } }
                 ]
             },
             options: {
@@ -1303,7 +1341,14 @@
         chartConstrutor = new Chart(ctx, {
             type: 'bar',
             data: { labels: linhas.map(l=>l.chave), datasets: [{ label: ROTULOS_METRICA[metrica], data: linhas.map(l=>l.valor), backgroundColor:'#1B4332' }] },
-            options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true} } }
+            options: {
+                responsive:true, maintainAspectRatio:false,
+                plugins:{
+                    legend:{display:false},
+                    datalabels: { anchor:'end', align:'top', color:'#1B4332', font:{family:'Inter', size:10, weight:'700'}, formatter:(v)=>v.toLocaleString('pt-BR') }
+                },
+                scales:{ y:{beginAtZero:true} }
+            }
         });
 
         document.getElementById('cabecalhoConstrutor').innerHTML = `<th>${ROTULOS_DIMENSAO[dim]}</th><th>${ROTULOS_METRICA[metrica]}</th><th>Nº de registros</th>`;
@@ -1606,6 +1651,17 @@
             backgroundColor: CORES_REGIAO[reg] || '#6B7280',
             data: anos.map(a => valorMetricaSerie(dadosFiltrados.filter(d => d.ano===a && d.regiao===reg), metricaSerieAtual))
         }));
+        // rótulo só no topo da coluna (total empilhado), não em cada segmento de região,
+        // senão viraria uma poluição visual com até 5 regiões por ano
+        if (datasets.length) {
+            datasets[datasets.length - 1].datalabels = {
+                display: true, anchor: 'end', align: 'top', color: '#2E271F', font: { family:'Inter', size: 10, weight: '700' },
+                formatter: (v, ctx) => {
+                    const total = ctx.chart.data.datasets.reduce((s, ds) => s + (ds.data[ctx.dataIndex] || 0), 0);
+                    return total > 0 ? total.toLocaleString('pt-BR') : '';
+                }
+            };
+        }
         const ctx = document.getElementById('graficoAno').getContext('2d');
         if (chartInstance) chartInstance.destroy();
         chartInstance = new Chart(ctx, {
@@ -1615,7 +1671,8 @@
                 responsive: true, maintainAspectRatio: false,
                 plugins: {
                     legend: { display: true, position:'bottom', labels:{ font:{family:'Inter',size:11}, boxWidth:12 } },
-                    tooltip: { backgroundColor: '#0F2A1E', titleFont: { family: 'Inter', size: 12, weight: '600' }, bodyFont: { family: 'Inter', size: 12 }, padding: 10, cornerRadius: 0 }
+                    tooltip: { backgroundColor: '#0F2A1E', titleFont: { family: 'Inter', size: 12, weight: '600' }, bodyFont: { family: 'Inter', size: 12 }, padding: 10, cornerRadius: 0 },
+                    datalabels: { display: false }
                 },
                 scales: {
                     y: { stacked:true, beginAtZero: true, ticks: { font: { family: 'Inter', size: 11 }, color: '#6B7280' }, grid: { color: '#E5E7EB', drawBorder: false } },
